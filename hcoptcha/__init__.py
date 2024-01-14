@@ -7,13 +7,14 @@ class Client:
     def __init__(self, api_key: str):
         self.api_key = api_key
 
-    def solve(self, site_key: str, url: str, proxy: str):
+    def solve(self, site_key: str, url: str, proxy: str, rqdata: str = None):
         client = Task(
             site_key=site_key,
             url=url,
             proxy=proxy,
             task_type="hcaptchaEnterprise",
-            api_key=self.api_key
+            api_key=self.api_key,
+            rqdata=rqdata
         )
 
         client.create_task()

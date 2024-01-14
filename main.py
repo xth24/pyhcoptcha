@@ -1,13 +1,15 @@
+import secrets
+
 import hcoptcha
 
 client = hcoptcha.Client(
-    api_key="api_key"
+    api_key=""
 )
 
 captcha_key = client.solve(
-    site_key="472b4c9f-f2b7-4382-8135-c983f5496eb9",
+    site_key="a9b5fb07-92ff-493f-86fe-352a2803b3df",
     url="https://discord.com/channels/@me",
-    proxy=f"proxy"
+    proxy="proxy"
 )
 
 print(captcha_key)

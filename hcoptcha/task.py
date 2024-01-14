@@ -4,12 +4,13 @@ from . import exceptions
 
 
 class Task:
-    def __init__(self, task_type: str, url: str, site_key: str, api_key: str, proxy: str):
+    def __init__(self, task_type: str, url: str, site_key: str, api_key: str, proxy: str, rqdata: str = None):
         self.requests = requests.Session()
         self.proxy = proxy
         self.api_key = api_key
         self.task_type = task_type
         self.url = url
+        self.rqdata = rqdata
         self.site_key = site_key
         self.task_id = None
         self.task_response = None
@@ -24,6 +25,7 @@ class Task:
                 "sitekey": self.site_key,
                 "url": self.url,
                 "proxy": self.proxy,
+                "rqdata": self.rqdata
             }
         }
 
