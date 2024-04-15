@@ -1,15 +1,14 @@
-import secrets
+from hcoptcha import HCaptchaEnterpriseTask
 
-import hcoptcha
+api_key = "hcoptcha_api_key"
+sitekey = "a5f74b19-9e45-40e0-b45d-47ff91b7a6c2"
+url = "https://accounts.hcaptcha.com/demo"
+proxy = "user:pass@ip:port"
+rqdata = None  # optional
 
-client = hcoptcha.Client(
-    api_key=""
-)
+hcaptcha_task = HCaptchaEnterpriseTask(api_key, sitekey, url, proxy, rqdata)
+task_creation_response = hcaptcha_task.create_task()
+print(task_creation_response)
 
-captcha_key = client.solve(
-    site_key="a9b5fb07-92ff-493f-86fe-352a2803b3df",
-    url="https://discord.com/channels/@me",
-    proxy="proxy"
-)
-
-print(captcha_key)
+task_result = hcaptcha_task.get_task_result()
+print(task_result)

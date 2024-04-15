@@ -1,2 +1,2 @@
-class ClientException(Exception):
+class SolverException(Exception):
     pass

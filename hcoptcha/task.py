@@ -1,55 +1,62 @@
+import time
 import requests
-
-from . import exceptions
+from hcoptcha import exceptions
 
 
 class Task:
-    def __init__(self, task_type: str, url: str, site_key: str, api_key: str, proxy: str, rqdata: str = None):
-        self.requests = requests.Session()
-        self.proxy = proxy
+    def __init__(self, api_key: str):
         self.api_key = api_key
-        self.task_type = task_type
-        self.url = url
-        self.rqdata = rqdata
-        self.site_key = site_key
-        self.task_id = None
-        self.task_response = None
-        self.task_error = None
-        self.task_state = None
 
-    def create_task(self):
-        data = {
-            "task_type": self.task_type,
+    def post_request(self, endpoint: str, data: dict):
+        response = requests.post(endpoint, json=data)
+        body = response.json()
+
+        if body.get('error'):
+            error_message = body.get('message', 'unknown error')
+            raise exceptions.SolverException(error_message)
+
+        return body
+
+
+class HCaptchaEnterpriseTask(Task):
+    def __init__(self, api_key: str, sitekey: str, url: str, proxy: str, rqdata: str = None):
+        super().__init__(api_key)
+        self.task_id = ""
+        self.params = {
+            "task_type": "hcaptchaEnterprise",
             "api_key": self.api_key,
             "data": {
-                "sitekey": self.site_key,
-                "url": self.url,
-                "proxy": self.proxy,
-                "rqdata": self.rqdata
+                "sitekey": sitekey,
+                "url": url,
+                "proxy": proxy
             }
         }
+        if rqdata:
+            self.params["data"]["rqdata"] = rqdata
 
-        response = self.requests.post('https://api.hcoptcha.online/api/createTask', json=data)
-        body = response.json()
-        if response.status_code != 200:
-            raise exceptions.ClientException(f"create_task: failed to create task: {body.get('message')}")
-        if body.get('error'):
-            raise exceptions.ClientException(f"create_task: failed to create task: {body.get('message')}")
+    def create_task(self):
+        endpoint = "https://api.hcoptcha.online/api/createTask"
+        response = self.post_request(endpoint, self.params)
+        self.task_id = response['task_id']
+        return self.task_id
 
-        self.task_id = body['task_id']
-
-    def get_task_data(self) -> [str, str]:
+    def get_task_result(self, retry_interval=3, max_retries=10):
+        endpoint = "https://api.hcoptcha.online/api/getTaskData"
         data = {
             "api_key": self.api_key,
             "task_id": self.task_id
         }
 
-        response = self.requests.post('https://api.hcoptcha.online/api/getTaskData', json=data)
-        body = response.json()
-        if response.status_code != 200:
-            raise exceptions.ClientException(f"get_task_data: failed to get task: {body.get('message')}")
-        if body.get('error'):
-            raise exceptions.ClientException(f"get_task_data: failed to get task: {body.get('message')}")
+        for _ in range(max_retries):
+            response = self.post_request(endpoint, data)
+            task_state = response['task']['state']
 
-        self.task_response = body['task']['captcha_key']
-        self.task_state = body['task']['state']
+            if task_state == "completed":
+                return response['task']['captcha_key']
+            elif task_state == "error":
+                error_message = response['task'].get('message', 'unknown error')
+                raise exceptions.SolverException(error_message)
+
+            time.sleep(retry_interval)
+
+        raise exceptions.SolverException("Max retries exceeded without completion.")
